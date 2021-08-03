@@ -1,25 +1,17 @@
-import { ApolloServer, gql } from "apollo-server";
-import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
+require("dotenv").config();
 
-const typeDefs = gql`
-    type Query {
-        hello: String
-    }
-`;
-const resolvers = {
-    Query: {
-        hello: () => "as",
-    },
-};
+import { ApolloServer } from "apollo-server";
+import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
+import schema from "./schema";
+
 const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  // GraphQLPlayground 를 바로 사용하기 위함 
-  plugins: [
-    ApolloServerPluginLandingPageGraphQLPlayground(),
-  ],
-  
+  schema,
+  // GraphQLPlayground 를 바로 사용하기 위함
+  plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],
 });
 
+const PORT = process.env.PORT;
 
-server.listen().then(({ url })=>{console.log(`go to ${url}`)});
+server.listen(PORT).then(({ url }) => {
+  console.log(`go to ${url}`);
+});
