@@ -1,37 +1,54 @@
-import { bcrypt } from "bcrypt";
+import fs from "fs";
+import bcrypt from "bcrypt";
 import client from "./../../client";
+import { protectedResolver } from "./../users.utils";
+
+const editProfileResolver = async (
+  _,
+  { firstName, lastName, username, email, password: newPassword, bio, avatar },
+  { loggedInUser }
+) => {
+  let avatarUrl = null;
+ if(avatar){
+    const {filename, createReadStream} = await avatar;
+    const newFilename = `${loggedInUser.id}-${Date.now()}-${filename}`;
+    const readStream = createReadStream();
+    const writeStream = fs.createWriteStream(process.cwd()+"/uploads/" +newFilename);
+    readStream.pipe(writeStream);
+    avatarUrl = `http://localhost:4000/static/${newFilename}`;
+  }
+  let uglyPassword = null;
+  if (newPassword) {
+    uglyPassword = await bcrypt.hash(newPassword, 10);
+  }
+  const ok = await client.user.update({
+    where: {
+      id: loggedInUser.id,
+    },
+    data: {
+      firstName,
+      lastName,
+      username,
+      email,
+      bio,
+      ...(uglyPassword && { password: uglyPassword }),
+      ...(avatarUrl && { avatar: avatarUrl }),
+    },
+  });
+  if (ok) {
+    return {
+      ok: true,
+    };
+  } else {
+    return {
+      ok: false,
+      error: "Could not update profile.",
+    };
+  }
+};
+
 export default {
   Mutation: {
-    editProfile: async (
-      _,
-      { firstName, lastName, username, email, password: newPassword }
-    ) => {
-      let uglyPassword = null;
-      if (password) {
-        uglyPassword = await bcrypt.hash(newPassword, 10);
-      }
-      const ok = client.user.update({
-        where: {
-          id: 1,
-        },
-        data: {
-          firstName,
-          lastName,
-          username,
-          email,
-          ...(uglyPassword && { password: uglyPassword }),
-        },
-      });
-      if (ok) {
-        return {
-          ok: true,
-        };
-      } else {
-        return {
-          ok: false,
-          error: "Could not update profile.",
-        };
-      }
-    },
+    editProfile: protectedResolver(editProfileResolver),
   },
 };

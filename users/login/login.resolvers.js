@@ -1,6 +1,6 @@
 import client from "../../client";
 import bcrypt from "bcrypt";
-import { jwt } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 export default {
   Mutation: {
     login: async (_, { username, password }) => {
@@ -12,7 +12,7 @@ export default {
       if (!passwordOk) {
         return { ok: false, error: "Incorrect password" };
       }
-      const token = await jwt.sign({ id: user.id }, process.SECRET_KEY);
+      const token = await jwt.sign({ id: user.id }, process.env.SECRET_KEY);
       return {
         ok: true,
         token,
